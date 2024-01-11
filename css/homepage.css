@@ -1,5 +1,23 @@
+body, html{
+  height: 100%;
+  
+  background-image: url("../img/background-photo.jpg");
+  image-rendering: pixelated;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 
-.cat-photo {
-  margin: 10px;
-  max-width: 500px;
+  
+  color:  rgb(224, 218, 200);
+  text-align:center;
+  text-shadow: revert;
+}
+
+
+
+#profile-pic{
+ margin: 10px;
+ max-width: 500px;
+ align-self: auto;
+
 }

@@ -1,10 +1,16 @@
 #content {
-  margin: 10px;080;
+  margin: 10px;
   padding: 10px;
-  border: solid 1px #808
+
+  background-attachment: scroll;
+
 }
 
 .minor-section {
+  backdrop-filter:contrast(23%);
   padding: 10px;
-  border: solid 1px #A0A0A0;
+  box-shadow: 0.5rem 0.5rem 20px black, -0.5rem -0.5rem 20px #c8baba;
+  
+
+  
 }
