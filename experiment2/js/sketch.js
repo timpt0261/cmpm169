@@ -102,6 +102,7 @@ function setup() {
 
 // draw() function is called repeatedly, it's the main animation loop
 function draw() {
+    clear();
     strokeWeight(PEN_WEIGHT);
 
     // Calculate mouse distance from the center
@@ -113,21 +114,31 @@ function draw() {
     // Ensure the number of sides stays within the specified range
     numSegments = constrain(numSegments, MIN_SEGMENTS, MAX_SEGMENTS);
     // Draw the dynamic shapes with dynamic sides and store vertices
-    drawShapeRing(numSegments);
+    
+    const MAX_SHAPES = 250
+    for (let i = -MAX_SHAPES; i <  MAX_SHAPES; i+= 50) {
+        for (let j = -MAX_SHAPES; j < MAX_SHAPES; j +=50)
+        {
+            drawShapeRing(numSegments, width/2 + i , height/2 + j);
+        }
+        
+    }
+
+
 
     let DELTA_R = SPEED * deltaTime;
     SHAPE_ROTATION += DELTA_R;
 
 }
 
-function drawShapeRing(numSegments) {
+function drawShapeRing(numSegments, x, y) {
     for (let i = MAX_SIZE; i > MIN_SIZE; i -= OFFSET) {
         var diff = (i - MIN_SIZE) / (MAX_SIZE - MIN_SIZE);
         let SHAPE_COLOR = lerpColor(COLOR_1, COLOR_2, diff);
-        drawDynamicShape(width / 2, height / 2, i, numSegments, SHAPE_ROTATION, SHAPE_COLOR);
-
+        drawDynamicShape(x, y, i, numSegments, SHAPE_ROTATION, SHAPE_COLOR);
     }
 }
+
 
 // mousePressed() function is called once after every time a mouse button is pressed
 function mousePressed() {
