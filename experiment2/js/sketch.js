@@ -10,6 +10,9 @@
 const VALUE1 = 1;
 const VALUE2 = 2;
 
+const BTN_X = 30;
+const BTN_Y = 1200;
+
 var MAX_SEGMENTS = 30;
 var MIN_SEGMENTS = 3;
 
@@ -18,6 +21,10 @@ var MIN_SIZE = 40;
 
 var OFFSET = 15;
 var SPEED = 0;
+
+var r_slider, c_slider, step_slider;
+var ROWS = 250, COLUMS = 250 ,STEP = 50;
+
 
 var PEN_WEIGHT = .5
 var SHAPE_ROTATION;
@@ -61,30 +68,22 @@ function setup() {
     SHAPE_ROTATION = 90;
 
     let RAND_COL_BTN = createButton("Color");
-    RAND_COL_BTN.position(30, 1000)
+    RAND_COL_BTN.position(40, 1700)
     RAND_COL_BTN.mousePressed(() => {
         COLOR_1 = randomColor();
         COLOR_2 = inverseColor(COLOR_1);
 
     });
 
-
-    let CLEAR_BTN = createButton("Clear");
-    CLEAR_BTN.position(30, 1050);
-
-    CLEAR_BTN.mousePressed(() => {
-        clear();
-    });
-
     let START_ROT_BTN = createButton("Start Rotation");
-    START_ROT_BTN.position(30, 1100);
+    START_ROT_BTN.position(40, 1750);
 
     START_ROT_BTN.mousePressed(() => {
         SPEED = SPEED == 0 ? 0.0001 : 0;
     });
 
     let ROTATION_BTN = createButton("Change Rotation")
-    ROTATION_BTN.position(30, 1150)
+    ROTATION_BTN.position(40, 1800)
 
 
     ROTATION_BTN.mousePressed(() => {
@@ -92,10 +91,26 @@ function setup() {
         SPEED *= -1;
     });
 
-    let slider = createSlider(15, 250, 15);
-    slider.position(30, 1200)
+    r_slider = createSlider(10, 250, 250);
+    r_slider.position(40, 1860)
+    r_slider.input(()=>{
+        ROWS = r_slider.value();
+    });
 
-    OFFSET = slider.value();
+    c_slider = createSlider(10, 250, 250);
+    c_slider.position(40, 1875)
+    c_slider.input(()=>{
+        COLUMS = c_slider.value();
+    });
+
+    step_slider = createSlider(25, 200, 50);
+    step_slider.position(40, 1890);
+
+    step_slider.input(()=>{
+        let st = step_slider.value();
+        STEP = st;
+    });
+
 
 
 }
@@ -103,6 +118,7 @@ function setup() {
 // draw() function is called repeatedly, it's the main animation loop
 function draw() {
     clear();
+    background(COLOR_2)
     strokeWeight(PEN_WEIGHT);
 
     // Calculate mouse distance from the center
@@ -114,17 +130,14 @@ function draw() {
     // Ensure the number of sides stays within the specified range
     numSegments = constrain(numSegments, MIN_SEGMENTS, MAX_SEGMENTS);
     // Draw the dynamic shapes with dynamic sides and store vertices
+
     
-    const MAX_SHAPES = 250
-    for (let i = -MAX_SHAPES; i <  MAX_SHAPES; i+= 50) {
-        for (let j = -MAX_SHAPES; j < MAX_SHAPES; j +=50)
-        {
-            drawShapeRing(numSegments, width/2 + i , height/2 + j);
+    for (let i = -ROWS; i < ROWS; i += STEP) {
+        for (let j = -COLUMS; j < COLUMS; j += STEP) {
+            drawShapeRing(numSegments, width / 2 + i, height / 2 + j);
         }
-        
+
     }
-
-
 
     let DELTA_R = SPEED * deltaTime;
     SHAPE_ROTATION += DELTA_R;
