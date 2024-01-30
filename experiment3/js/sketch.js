@@ -16,7 +16,7 @@ const NOISE_SCALE_MIN = 0.001;
 
 const NOISE_SCALE = 0.5;
 const MIN_SIZE = 1;
-const MAX_SIZE = 5;
+const MAX_SIZE = 300;
 const SHAPE_ROTATION = 0;
 
 let nx, ny;
@@ -25,7 +25,7 @@ let colorPallet = [];
 let x = 300;
 let y = 300;
 let rings = [];
-let currentMode = "goldenSpiral";
+let currentMode = "randomWalk";
 
 // Globals
 let myInstance;
@@ -107,7 +107,7 @@ function drawRings() {
     );
 
     // Reduce the alpha of the ring over time
-    ring.alpha -= deltaTime * 0.01;
+    ring.alpha -= deltaTime * 0.1;
     if (ring.alpha <= 0) {
       // Remove the ring from the array when alpha becomes 0
       rings.splice(i, 1);
@@ -204,6 +204,12 @@ function goldenSpiral() {
   let radius = dist(x, y, width / 2, height / 2);
   let nextRadius = radius * goldenRatio * 0.617; // range (0.590 - 0.617)
   angle += radians(TWO_PI); // range (5 - 20)
+
+  console.log(nextRadius);
+  // Check if nextRadius is too small, and reset it to a larger value
+  if (nextRadius < 30.0) {
+    nextRadius = 300;
+  }
 
   // Update position based on polar to Cartesian coordinates conversion
   x = width / 2 + nextRadius * cos(angle);
