@@ -171,8 +171,8 @@ function randomWalk() {
   let stepY = floor(random(-OFFSET, OFFSET));
 
   // Update position
-  x += stepX;
-  y += stepY;
+  x += stepX * 10;
+  y += stepY * 10;
 
   // Constrain the position to stay within the canvas
   x = constrain(x, 0, width - 1);
