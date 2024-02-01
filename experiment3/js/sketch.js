@@ -1,12 +1,4 @@
-// sketch.js - purpose and description here
-// Author: Your Name
-// Date:
-
-// Here is how you might set up an OOP p5.js project
-// Note that p5.js looks for a file called sketch.js
-
 // Constants - User-servicable parts
-// In a longer project I like to put these in a separate file
 const VALUE1 = 1;
 const VALUE2 = 2;
 
@@ -15,21 +7,35 @@ const NOISE_SCALE_MAX = 100;
 const NOISE_SCALE_MIN = 0.001;
 
 const NOISE_SCALE = 0.5;
-const MIN_SIZE = 1;
-const MAX_SIZE = 300;
+let MIN_SIZE = 1;
+let MAX_SIZE = 300;
 const SHAPE_ROTATION = 0;
 
-let nx, ny;
+const GOLDEN_RATIO = 1.618;
+let SPIRAL_SCALE = 0.617;
+const MIN_SPIRAL_RADIUS = 30.0;
+const RESET_SPIRAL_RADIUS = 300;
 
+const RING_DRAW_SIZE = 2;
+
+// Other Constants
+const RING_DRAW_STEP = 10;
+
+let nx, ny;
 let colorPallet = [];
 let x = 300;
 let y = 300;
 let rings = [];
 let currentMode = "randomWalk";
 
-// Globals
 let myInstance;
 let canvasContainer;
+
+//sliders
+let minSizeSlider, maxSizeSlider, spiralScaleSlider;
+
+//buttons
+let randomWalkButton, goldenSpiralButton, randomPlacmentButton;
 
 class MyClass {
   constructor(param1, param2) {
@@ -42,40 +48,57 @@ class MyClass {
   }
 }
 
-// setup() function is called once when the program starts
 function setup() {
-  // place our canvas, making it fit our container
   canvasContainer = $("#canvas-container");
   let canvas = createCanvas(canvasContainer.width(), canvasContainer.height());
   canvas.parent("canvas-container");
-  // resize canvas is the page is resized
   $(window).resize(function () {
-    console.log("Resizing...");
     resizeCanvas(canvasContainer.width(), canvasContainer.height());
   });
-  // create an instance of the class
+
   myInstance = new MyClass(VALUE1, VALUE2);
 
-  var centerHorz = windowWidth / 2;
-  var centerVert = windowHeight / 2;
+  colorPallet = [
+    color("#F23D4C"),
+    color("#6387F2"),
+    color("#F2D335"),
+    color("#3DD9BC"),
+    color("#F28066"),
+  ];
 
-   colorPallet = [
-     color("#F23D4C"),
-     color("#6387F2"),
-     color("#F2D335"),
-     color("#3DD9BC"),
-     color("#F28066"),
-   ];
+  randomWalkButton = createButton("Random Walk");
+  const UI_HEIGHT = 1570;
+  randomWalkButton.position(120, UI_HEIGHT);
+  randomWalkButton.mousePressed(() => setMode("randomWalk"));
+
+  goldenSpiralButton = createButton("Golden Spiral");
+  goldenSpiralButton.position(240, UI_HEIGHT);
+  goldenSpiralButton.mousePressed(() => setMode("goldenSpiral"));
+
+  randomPlacmentButton = createButton("Random Placment");
+  randomPlacmentButton.position(360, UI_HEIGHT);
+  randomPlacmentButton.mousePressed(() => setMode("randomPlacment"));
+
+  // Create sliders
+  minSizeSlider = createSlider(1, 300, MIN_SIZE);
+  minSizeSlider.position(500, UI_HEIGHT);
+
+  maxSizeSlider = createSlider(1, 300, MAX_SIZE);
+  maxSizeSlider.position(650, UI_HEIGHT);
+
+  spiralScaleSlider = createSlider(0.59, 0.617, SPIRAL_SCALE, 0.001);
+  spiralScaleSlider.position(800,UI_HEIGHT);
 }
 
-// draw() function is called repeatedly, it's the main animation loop
 function draw() {
   clear();
   background(234);
-  // call a method on the instance
   myInstance.myMethod();
 
-  // Calculate mouse distance from the center
+    MIN_SIZE = minSizeSlider.value();
+    MAX_SIZE = maxSizeSlider.value();
+    SPIRAL_SCALE = spiralScaleSlider.value();
+
   nx = int(map(mouseX, 0, width, NOISE_SCALE_MIN, NOISE_SCALE_MAX));
   ny = int(map(mouseY, 0, height, NOISE_SCALE_MIN, NOISE_SCALE_MAX));
 
@@ -83,19 +106,23 @@ function draw() {
     randomWalk();
   } else if (currentMode === "goldenSpiral") {
     goldenSpiral();
-  } else if (currentMode === "randomRing") {
-    randomRing();
+  } else if (currentMode === "randomPlacment") {
+    randomPlacment();
   }
 
   drawRings();
-
 }
+
+function setMode(mode) {
+  currentMode = mode;
+  rings = []; // Clear existing rings when switching mode
+}
+
 
 function drawRings() {
   for (let i = rings.length - 1; i >= 0; i--) {
     let ring = rings[i];
 
-    // Draw and update existing rings
     drawDynamicShapeRing(
       ring.x,
       ring.y,
@@ -106,10 +133,8 @@ function drawRings() {
       ring.alpha
     );
 
-    // Reduce the alpha of the ring over time
     ring.alpha -= deltaTime * 0.1;
     if (ring.alpha <= 0) {
-      // Remove the ring from the array when alpha becomes 0
       rings.splice(i, 1);
     }
   }
@@ -124,14 +149,13 @@ function drawDynamicShapeRing(
   shapeColor,
   alpha
 ) {
+  const alphaReduction = deltaTime * 0.1;
   var angleIncrement = TWO_PI / numSegments;
   noStroke();
   fill(shapeColor.levels[0], shapeColor.levels[1], shapeColor.levels[2], alpha);
   beginShape();
   for (var i = 0; i < numSegments; i++) {
     var angle = i * angleIncrement + rotationAngle;
-
-    // Use noise to create irregular shapes
     var noiseFactor = map(
       noise(x * nx, y * ny, i * NOISE_SCALE),
       0,
@@ -141,7 +165,6 @@ function drawDynamicShapeRing(
     );
     var xPos = x + cos(angle) * size * noiseFactor;
     var yPos = y + sin(angle) * size * noiseFactor;
-
     vertex(xPos, yPos);
   }
   endShape(CLOSE);
@@ -149,9 +172,8 @@ function drawDynamicShapeRing(
 
 function randomWalk() {
   stroke(0);
-  strokeWeight(2);
+  strokeWeight(RING_DRAW_SIZE);
 
-  // Add the current point to the array
   let ringSize = random(MIN_SIZE, MAX_SIZE);
   let ringColor = random(colorPallet);
   rings.push({
@@ -163,27 +185,22 @@ function randomWalk() {
     alpha: 255,
   });
 
-  // Draw the current point
   point(x, y);
 
-  // Generate a random step
   let stepX = floor(random(-OFFSET, OFFSET));
   let stepY = floor(random(-OFFSET, OFFSET));
 
-  // Update position
-  x += stepX * 10;
-  y += stepY * 10;
+  x += stepX * RING_DRAW_STEP;
+  y += stepY * RING_DRAW_STEP;
 
-  // Constrain the position to stay within the canvas
   x = constrain(x, 0, width - 1);
   y = constrain(y, 0, height - 1);
 }
 
 function goldenSpiral() {
   stroke(0);
-  strokeWeight(2);
+  strokeWeight(RING_DRAW_SIZE);
 
-  // Add the current point to the array
   let ringSize = random(MIN_SIZE, MAX_SIZE);
   let ringColor = random(colorPallet);
   rings.push({
@@ -195,38 +212,29 @@ function goldenSpiral() {
     alpha: 255,
   });
 
-  // Draw the current point
   point(x, y);
 
-  // Calculate the next point using the golden ratio with a larger scale
-  let goldenRatio = 1.618;
   let angle = atan2(y - height / 2, x - width / 2);
   let radius = dist(x, y, width / 2, height / 2);
-  let nextRadius = radius * goldenRatio * 0.617; // range (0.590 - 0.617)
-  angle += radians(TWO_PI); // range (5 - 20)
+  let nextRadius = radius * GOLDEN_RATIO * SPIRAL_SCALE;
 
-  console.log(nextRadius);
-  // Check if nextRadius is too small, and reset it to a larger value
-  if (nextRadius < 30.0) {
-    nextRadius = 300;
+  angle += radians(TWO_PI);
+
+  if (nextRadius < MIN_SPIRAL_RADIUS) {
+    nextRadius = RESET_SPIRAL_RADIUS;
   }
 
-  // Update position based on polar to Cartesian coordinates conversion
   x = width / 2 + nextRadius * cos(angle);
   y = height / 2 + nextRadius * sin(angle);
 
-  // Constrain the position to stay within the canvas
   x = constrain(x, 0, width - 1);
   y = constrain(y, 0, height - 1);
 }
 
-function randomRing() {
-  // Implement the logic for creating a ring based on a random point
-  // Adjust x, y, rings, etc. accordingly
+function randomPlacment() {
   stroke(0);
-  strokeWeight(2);
+  strokeWeight(RING_DRAW_SIZE);
 
-  // Add the current point to the array
   let ringSize = random(MIN_SIZE, MAX_SIZE);
   let ringColor = random(colorPallet);
   rings.push({
@@ -238,7 +246,10 @@ function randomRing() {
     alpha: 255,
   });
 
-  // Draw the current point
+  x = random(0, width-1);
+  y = random(0, height-1);
+
+
+
   point(x, y);
 }
-
