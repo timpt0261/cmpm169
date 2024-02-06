@@ -10,8 +10,6 @@ const VALUE2 = 2;
 const w = 640;
 const h = 480;
 
-
-
 // Globals
 let myInstance;
 let canvasContainer;
@@ -24,7 +22,7 @@ let SHAPES = [];
 let maxLines = 10000;
 let lineWeight = 1;
 
-let currentMode = "sqauares";
+let currentMode = "circles";
 
 class MyClass {
     constructor(param1, param2) {
@@ -54,6 +52,27 @@ function setup() {
     lineCountSlider = createSlider(1, 20000, maxLines, 1);
     lineCountSlider.position(20, UI_HEIGHT);
     lineCountSlider.style('width', '80px');
+
+    // Buttons for different drawing modes
+    let linesButton = createButton('Lines');
+    linesButton.position(220, UI_HEIGHT);
+    linesButton.mousePressed(() => currentMode = "lines");
+
+    let squaresButton = createButton('Squares');
+    squaresButton.position(280, UI_HEIGHT);
+    squaresButton.mousePressed(() => currentMode = "squares");
+
+    let circlesButton = createButton('Circles');
+    circlesButton.position(340, UI_HEIGHT);
+    circlesButton.mousePressed(() => currentMode = "circles");
+
+    let trianglesButton = createButton('Triangles');
+    trianglesButton.position(400, UI_HEIGHT);
+    trianglesButton.mousePressed(() => currentMode = "triangles");
+
+    let shapesButton = createButton('Shapes');
+    shapesButton.position(460, UI_HEIGHT);
+    shapesButton.mousePressed(() => currentMode = "shapes");
 
     // resize canvas if the page is resized
     $(window).resize(function () {
@@ -138,7 +157,7 @@ function moveLines() {
         let b = video.pixels[index * 4 + 2];
 
         stroke(r, g, b);
-        fill(r,g,b);
+        fill(r, g, b);
         drawShapes(drawnPoint);
 
         let angle = atan2(drawnPoint.y - mouseYPos, drawnPoint.x - mouseXPos);
@@ -148,14 +167,46 @@ function moveLines() {
 }
 
 function drawShapes(drawnPoint) {
-    if (currentMode == 'lines'){
-        strokeWeight(lineWeight);
-        line(drawnPoint.x, drawnPoint.y, drawnPoint.x + random(-10, 10), drawnPoint.y + random(-10, 10));
-    }else if( currentMode == "sqauares"){
-        square(drawnPoint.x, drawnPoint.y, random(lineWeight))
+    switch (currentMode) {
+        case "lines":
+            strokeWeight(lineWeight);
+            line(drawnPoint.x, drawnPoint.y, drawnPoint.x + random(-10, 10), drawnPoint.y + random(-10, 10));
+            break;
+        case "squares":
+            square(drawnPoint.x, drawnPoint.y, random(lineWeight))
+            break;
+        case "circles":
+            circle(drawnPoint.x, drawnPoint.y, random(lineWeight));
+            break;
+        case "triangles":
+            let x1 = drawnPoint.x + random(-10, 10);
+            let y1 = drawnPoint.y + random(-10, 10);
+            let x2 = drawnPoint.x + random(-10, 10);
+            let y2 = drawnPoint.y + random(-10, 10);
+            triangle(drawnPoint.x, drawnPoint.y, x1, y1, x2, y2);
+            break;
+        case "shapes":
+            // Generate random shapes (e.g., polygons)
+            // You can add your own implementation here
+            let sides = floor(random(3, 7)); // Random number of sides between 3 and 6
+            let angleIncrement = TWO_PI / sides;
+            beginShape();
+            for (let i = 0; i < sides; i++) {
+                let angle = i * angleIncrement;
+                let radius = random(lineWeight * 2, lineWeight * 5);
+                let x = drawnPoint.x + cos(angle) * radius;
+                let y = drawnPoint.y + sin(angle) * radius;
+                vertex(x, y);
+            }
+            endShape(CLOSE);
+            break;
+        default:
+            strokeWeight(lineWeight);
+            line(drawnPoint.x, drawnPoint.y, drawnPoint.x + random(-10, 10), drawnPoint.y + random(-10, 10));
+            break;
     }
-    
 }
+
 
 function ensureLinesWithinCanvas() {
     while (SHAPES.length < maxLines) {
