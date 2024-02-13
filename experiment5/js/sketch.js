@@ -61,7 +61,6 @@ function setup() {
   // create an instance of the class
   myInstance = new MyClass(VALUE1, VALUE2);
 
-
   cols = w / scl;
   rows = h / scl;
   waveColor = color(0, 0, 255); // Default color: blue
@@ -78,10 +77,11 @@ function draw() {
 
   // Put drawings here
 
-  // texture(skyTexture);
-  // plane(canvasContainer.width(), canvasContainer.height());
+  texture(skyTexture);
+  sphere((canvasContainer.width() + canvasContainer.height()) * 2);
 
   updateWaves();
+  renderHaze();
 
   translate(-width / 2, 50); // Move towards left
   rotateX(PI / 3);
@@ -94,7 +94,6 @@ function draw() {
   renderWaves();
 
   drawTower();
-
 }
 
 // mousePressed() function is called once after every time a mouse button is pressed
@@ -138,7 +137,6 @@ function renderWaves() {
   }
 }
 
-
 function renderFog() {
   fill(100, 100, 100, 50);
 
@@ -169,8 +167,13 @@ function drawTower() {
 }
 
 function initializeParticles() {
-  for (let i = 0; i < MAX_PARTICLE; i++) { // Adjust the number of particles as needed
-    let particle = new Particle(random(width), random(height), random(-1000, 1000));
+  for (let i = 0; i < MAX_PARTICLE; i++) {
+    // Adjust the number of particles as needed
+    let particle = new Particle(
+      random(width),
+      random(height),
+      random(-1000, 1000)
+    );
     particles.push(particle);
   }
 }
@@ -178,7 +181,8 @@ function initializeParticles() {
 function renderFog() {
   for (let particle of particles) {
     particle.update(); // Update particle position
-    if (!particle.isOnScreen()) { // Check if particle is off-screen
+    if (!particle.isOnScreen()) {
+      // Check if particle is off-screen
       particle.resetPosition(); // Reset particle position
     }
     particle.display(); // Display particle
@@ -188,8 +192,8 @@ function renderFog() {
 class Particle {
   constructor(x, y, z) {
     this.position = createVector(x, y, z);
-    this.velocity = p5.Vector.random3D().mult(random(0.1, 2)); // Random initial velocity
-    this.size = random(30, 50); // Random size
+    this.velocity = p5.Vector.random3D().mult(random(0.01, 0.1)); // Random initial velocity
+    this.size = random(1, 2); // Random size
   }
 
   update() {
@@ -197,19 +201,24 @@ class Particle {
   }
 
   display() {
-    texture(smokeTexture);
+    fill(0.5, 0.5);
     noStroke();
     push();
     translate(this.position.x, this.position.y, this.position.z);
     rotateX(PI / 2);
-    plane(this.size);
+    sphere(this.size);
     pop();
   }
 
   isOnScreen() {
-    return this.position.x > 0 && this.position.x < width &&
-      this.position.y > 0 && this.position.y < height &&
-      this.position.z > -1000 && this.position.z < 1000;
+    return (
+      this.position.x > 0 &&
+      this.position.x < width &&
+      this.position.y > 0 &&
+      this.position.y < height &&
+      this.position.z > -1000 &&
+      this.position.z < 1000
+    );
   }
 
   resetPosition() {
@@ -217,4 +226,11 @@ class Particle {
     this.position.y = random(height);
     this.position.z = random(-1000, 1000);
   }
+}
+
+function renderHaze() {
+  fill(255, 255, 255, 100); // White transparent fill
+  noStroke();
+  // Draw a large plane covering the camera view
+  plane((canvasContainer.width() + canvasContainer.height()) * 2);
 }
