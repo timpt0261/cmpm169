@@ -77,8 +77,8 @@ function draw() {
 
   // Put drawings here
 
-  texture(skyTexture);
-  sphere((canvasContainer.width() + canvasContainer.height()) * 2);
+  // texture(skyTexture);
+  // sphere((canvasContainer.width() + canvasContainer.height()) * 2);
 
   updateWaves();
   renderHaze();
