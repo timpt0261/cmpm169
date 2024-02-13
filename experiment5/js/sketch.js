@@ -5,7 +5,7 @@ const VALUE2 = 2;
 
 let cols, rows;
 const scl = 20;
-const w = 1200;
+const w = 1500;
 const h = 800;
 
 let flying = 0;
@@ -67,7 +67,7 @@ function setup() {
 
 // draw() function is called repeatedly, it's the main animation loop
 function draw() {
-  background(240);
+  background(25);
   // call a method on the instance
   myInstance.myMethod();
 
@@ -75,8 +75,8 @@ function draw() {
   var centerHorz = canvasContainer.width() / 2 - 125;
   var centerVert = canvasContainer.height() / 2 - 125;
 
-  texture(skyTexture);
-  plane(canvasContainer.width(), canvasContainer.height());
+  // texture(skyTexture);
+  // plane(canvasContainer.width(), canvasContainer.height());
 
   updateTerrain();
   //drawSpheres();
@@ -84,9 +84,17 @@ function draw() {
   translate(-width / 2, 50); // Move towards left
   rotateX(PI / 3);
 
+  dirX = (mouseX / width - 0.5) * 100;
+  dirY = (mouseY / height - 0.5) * 100;
+  directionalLight(250, 250, 250, -dirX, -dirY, -1); // Update directional light direction
+
   renderTerrain();
 
   drawTower();
+
+
+
+
 }
 
 // mousePressed() function is called once after every time a mouse button is pressed
@@ -115,7 +123,7 @@ function updateTerrain() {
 
 function renderTerrain() {
   texture(waveTexture); // Apply wave texture
-
+  // fill(44,0,0)
   for (let y = 0; y < rows - 1; y++) {
     beginShape(TRIANGLE_STRIP);
     for (let x = 0; x < cols; x++) {
@@ -133,12 +141,15 @@ function renderTerrain() {
 function drawTower() {
   // Tower
   rotateX(PI / 2); // Rotate to make tower vertical
+  let bobHeight = map(sin(frameCount * 0.05), -1, 1, 40, 305); // Bobbing motion
+  let rotationsAngle = map(sin(frameCount * 0.01), -1, 1, 0, 20);
   for (let i = 0; i < 6; i++) {
     push();
-    translate(width / 2, -i * 50 + height / 2, 20);
+    translate(width / 2, -i * 50 + height / 2 + bobHeight - 340, 1000);
+    rotateY(rotationsAngle);
     let boxSize = map(i, 0, 5, 150, 50); // Gradually increase size towards top
     texture(towerTexture);
-    box(boxSize, 50, boxSize);
+    box(boxSize, 200, boxSize);
     pop();
   }
 }
