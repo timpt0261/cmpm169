@@ -20,6 +20,10 @@ let canvasContainer;
 let towerTexture;
 let waveTexture;
 let skyTexture;
+let smokeTexture;
+
+const MAX_PARTICLE = 1000;
+let particles = []; // Array to store fog particles
 
 class MyClass {
   constructor(param1, param2) {
@@ -34,8 +38,9 @@ class MyClass {
 
 function preload() {
   skyTexture = loadImage("../img/experiment_5/SkyTexture.png");
-  towerTexture = loadImage("../img/experiment_5/TowerTexture/dark_stone.png");
+  towerTexture = loadImage("../img/experiment_5/dark-stone-texture.png");
   waveTexture = loadImage("../img/experiment_5/WaveTexture.png");
+  smokeTexture = loadImage("../img/experiment_5/smoke-texture.jpg");
 }
 
 // setup() function is called once when the program starts
@@ -56,13 +61,13 @@ function setup() {
   // create an instance of the class
   myInstance = new MyClass(VALUE1, VALUE2);
 
-  var centerHorz = windowWidth / 2;
-  var centerVert = windowHeight / 2;
 
   cols = w / scl;
   rows = h / scl;
   waveColor = color(0, 0, 255); // Default color: blue
   initializeTerrain();
+
+  initializeParticles();
 }
 
 // draw() function is called repeatedly, it's the main animation loop
@@ -72,14 +77,11 @@ function draw() {
   myInstance.myMethod();
 
   // Put drawings here
-  var centerHorz = canvasContainer.width() / 2 - 125;
-  var centerVert = canvasContainer.height() / 2 - 125;
 
   // texture(skyTexture);
   // plane(canvasContainer.width(), canvasContainer.height());
 
-  updateTerrain();
-  //drawSpheres();
+  updateWaves();
 
   translate(-width / 2, 50); // Move towards left
   rotateX(PI / 3);
@@ -87,13 +89,11 @@ function draw() {
   dirX = (mouseX / width - 0.5) * 100;
   dirY = (mouseY / height - 0.5) * 100;
   directionalLight(250, 250, 250, -dirX, -dirY, -1); // Update directional light direction
-
-  renderTerrain();
+  // Set fog color with low transparency
+  renderFog();
+  renderWaves();
 
   drawTower();
-
-
-
 
 }
 
@@ -108,7 +108,7 @@ function initializeTerrain() {
   );
 }
 
-function updateTerrain() {
+function updateWaves() {
   flying -= 0.001 * deltaTime;
   let yoff = flying;
   for (let y = 0; y < rows; y++) {
@@ -121,20 +121,34 @@ function updateTerrain() {
   }
 }
 
-function renderTerrain() {
-  texture(waveTexture); // Apply wave texture
-  // fill(44,0,0)
+function renderWaves() {
+  // Apply wave texture
+  texture(waveTexture);
   for (let y = 0; y < rows - 1; y++) {
     beginShape(TRIANGLE_STRIP);
     for (let x = 0; x < cols; x++) {
-      let textureX = map(x, 0, cols, 0, waveTexture.width); // Map x to texture coordinates
-      let textureY = map(y, 0, rows, 0, waveTexture.height); // Map y to texture coordinates
-      vertex(x * scl, y * scl, terrain[x][y], textureX, textureY); // Pass texture coordinates to vertex
-      textureX = map(x, 0, cols, 0, waveTexture.width); // Map x to texture coordinates for next vertex
-      textureY = map(y + 1, 0, rows, 0, waveTexture.height); // Map y+1 to texture coordinates for next vertex
-      vertex(x * scl, (y + 1) * scl, terrain[x][y + 1], textureX, textureY); // Pass texture coordinates to next vertex
+      let textureX = map(x, 0, cols, 0, waveTexture.width);
+      let textureY = map(y, 0, rows, 0, waveTexture.height);
+      vertex(x * scl, y * scl, terrain[x][y], textureX, textureY);
+      textureX = map(x, 0, cols, 0, waveTexture.width);
+      textureY = map(y + 1, 0, rows, 0, waveTexture.height);
+      vertex(x * scl, (y + 1) * scl, terrain[x][y + 1], textureX, textureY);
     }
     endShape();
+  }
+}
+
+
+function renderFog() {
+  fill(100, 100, 100, 50);
+
+  // Render fog squares
+  for (let y = 0; y < rows - 1; y++) {
+    for (let x = 0; x < cols; x++) {
+      let posX = x * scl;
+      let posY = y * scl;
+      rect(posX, posY, scl, scl);
+    }
   }
 }
 
@@ -151,5 +165,56 @@ function drawTower() {
     texture(towerTexture);
     box(boxSize, 200, boxSize);
     pop();
+  }
+}
+
+function initializeParticles() {
+  for (let i = 0; i < MAX_PARTICLE; i++) { // Adjust the number of particles as needed
+    let particle = new Particle(random(width), random(height), random(-1000, 1000));
+    particles.push(particle);
+  }
+}
+
+function renderFog() {
+  for (let particle of particles) {
+    particle.update(); // Update particle position
+    if (!particle.isOnScreen()) { // Check if particle is off-screen
+      particle.resetPosition(); // Reset particle position
+    }
+    particle.display(); // Display particle
+  }
+}
+
+class Particle {
+  constructor(x, y, z) {
+    this.position = createVector(x, y, z);
+    this.velocity = p5.Vector.random3D().mult(random(0.1, 2)); // Random initial velocity
+    this.size = random(30, 50); // Random size
+  }
+
+  update() {
+    this.position.add(this.velocity);
+  }
+
+  display() {
+    texture(smokeTexture);
+    noStroke();
+    push();
+    translate(this.position.x, this.position.y, this.position.z);
+    rotateX(PI / 2);
+    plane(this.size);
+    pop();
+  }
+
+  isOnScreen() {
+    return this.position.x > 0 && this.position.x < width &&
+      this.position.y > 0 && this.position.y < height &&
+      this.position.z > -1000 && this.position.z < 1000;
+  }
+
+  resetPosition() {
+    this.position.x = random(width);
+    this.position.y = random(height);
+    this.position.z = random(-1000, 1000);
   }
 }
