@@ -23,7 +23,7 @@ let skyTexture;
 let smokeTexture;
 
 const MAX_PARTICLE = 1000;
-let particles = []; // Array to store fog particles
+const fogParticles = [];
 
 class MyClass {
   constructor(param1, param2) {
@@ -37,7 +37,7 @@ class MyClass {
 }
 
 function preload() {
-  skyTexture = loadImage("../img/experiment_5/SkyTexture.png");
+  skyTexture = loadImage("../img/experiment_5/NightSkyTexture.jpg");
   towerTexture = loadImage("../img/experiment_5/dark-stone-texture.png");
   waveTexture = loadImage("../img/experiment_5/WaveTexture.png");
   smokeTexture = loadImage("../img/experiment_5/smoke-texture.jpg");
@@ -65,23 +65,18 @@ function setup() {
   rows = h / scl;
   waveColor = color(0, 0, 255); // Default color: blue
   initializeTerrain();
-
-  initializeParticles();
+  initializeFogParticles();
 }
 
 // draw() function is called repeatedly, it's the main animation loop
 function draw() {
-  background(25);
+  background(20);
   // call a method on the instance
   myInstance.myMethod();
 
   // Put drawings here
-
-  // texture(skyTexture);
-  // sphere((canvasContainer.width() + canvasContainer.height()) * 2);
-
   updateWaves();
-  renderHaze();
+  updateAndRenderFogParticles();
 
   translate(-width / 2, 50); // Move towards left
   rotateX(PI / 3);
@@ -89,11 +84,10 @@ function draw() {
   dirX = (mouseX / width - 0.5) * 100;
   dirY = (mouseY / height - 0.5) * 100;
   directionalLight(250, 250, 250, -dirX, -dirY, -1); // Update directional light direction
-  // Set fog color with low transparency
-  renderFog();
   renderWaves();
 
   drawTower();
+
 }
 
 // mousePressed() function is called once after every time a mouse button is pressed
@@ -137,100 +131,70 @@ function renderWaves() {
   }
 }
 
-function renderFog() {
-  fill(100, 100, 100, 50);
-
-  // Render fog squares
-  for (let y = 0; y < rows - 1; y++) {
-    for (let x = 0; x < cols; x++) {
-      let posX = x * scl;
-      let posY = y * scl;
-      rect(posX, posY, scl, scl);
-    }
-  }
-}
 
 function drawTower() {
   // Tower
   rotateX(PI / 2); // Rotate to make tower vertical
   let bobHeight = map(sin(frameCount * 0.05), -1, 1, 40, 305); // Bobbing motion
   let rotationsAngle = map(sin(frameCount * 0.01), -1, 1, 0, 20);
-  for (let i = 0; i < 6; i++) {
+  let hoveDirection = map(sin(frameCount * 0.01), -1, 1, 400, 2000);
+  for (let i = 0; i < 10; i++) {
     push();
-    translate(width / 2, -i * 50 + height / 2 + bobHeight - 340, 1000);
+    translate(width / 2, -i * 50 + height / 2 + bobHeight - 340, hoveDirection);
     rotateY(rotationsAngle);
-    let boxSize = map(i, 0, 5, 150, 50); // Gradually increase size towards top
+    let boxSize = map(i, 0, 10, 200, 100); // Gradually increase size towards top
     texture(towerTexture);
     box(boxSize, 200, boxSize);
     pop();
   }
 }
 
-function initializeParticles() {
-  for (let i = 0; i < MAX_PARTICLE; i++) {
-    // Adjust the number of particles as needed
-    let particle = new Particle(
-      random(width),
-      random(height),
-      random(-1000, 1000)
-    );
-    particles.push(particle);
+
+function renderHaze() {
+  crea
+}
+
+function initializeFogParticles() {
+  for (let i = 0; i < MAX_PARTICLE; i++) { // Adjust the number of fog particles as needed
+    fogParticles.push(new FogParticle(random(-width, width), random(-height, height), random(100, 2000)));
   }
 }
 
-function renderFog() {
-  for (let particle of particles) {
-    particle.update(); // Update particle position
-    if (!particle.isOnScreen()) {
-      // Check if particle is off-screen
-      particle.resetPosition(); // Reset particle position
-    }
-    particle.display(); // Display particle
+function updateAndRenderFogParticles() {
+  for (let particle of fogParticles) {
+    particle.update();
+    particle.display();
   }
 }
 
-class Particle {
+class FogParticle {
   constructor(x, y, z) {
     this.position = createVector(x, y, z);
-    this.velocity = p5.Vector.random3D().mult(random(0.01, 0.1)); // Random initial velocity
-    this.size = random(1, 2); // Random size
+    this.velocity = createVector(0, random(0.01, 1.1),); // Random initial velocity in the upward direction
+    this.size = random(1, 10); // Random size for fog circles
   }
 
   update() {
+
+    this.applyVelocity();
+    this.resetIfBelowCanvas();
+  }
+
+
+  applyVelocity() {
     this.position.add(this.velocity);
   }
 
+  resetIfBelowCanvas() {
+    if (this.position.y > height) {
+      this.position.y = 0;
+      this.position.x = random(width);
+    }
+  }
+
   display() {
-    fill(0.5, 0.5);
     noStroke();
-    push();
-    translate(this.position.x, this.position.y, this.position.z);
-    rotateX(PI / 2);
-    sphere(this.size);
-    pop();
+    texture(smokeTexture);
+    ellipse(this.position.x, this.position.y, this.size, this.size);
   }
-
-  isOnScreen() {
-    return (
-      this.position.x > 0 &&
-      this.position.x < width &&
-      this.position.y > 0 &&
-      this.position.y < height &&
-      this.position.z > -1000 &&
-      this.position.z < 1000
-    );
-  }
-
-  resetPosition() {
-    this.position.x = random(width);
-    this.position.y = random(height);
-    this.position.z = random(-1000, 1000);
-  }
-}
-
-function renderHaze() {
-  fill(255, 255, 255, 100); // White transparent fill
-  noStroke();
-  // Draw a large plane covering the camera view
-  plane((canvasContainer.width() + canvasContainer.height()) * 2);
 }
