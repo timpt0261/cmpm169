@@ -11,14 +11,19 @@ const VALUE1 = 1;
 const VALUE2 = 2;
 
 let characterGrid;
-let font, style, textColor, size;
+let fontName, snakeStyle, snakeColor, snakeSizeVal;
 
 let head;
 let start_X;
 let start_Y;
 let stepCounter = 0;
-let extensionRate = 10; // Increase rate of extension
+let extensionRate = 1; // Increase rate of extension
 let currentCharacter;
+
+let snakeSegments = []; // Array to hold snake segments
+
+let updateInterval; // Interval for updating snake body
+let removeInterval; 
 
 // Globals
 let myInstance;
@@ -54,70 +59,67 @@ function setup() {
   var centerHorz = windowWidth / 2;
   var centerVert = windowHeight / 2;
 
-  characterGrid = new CharacterGrid(60, 40); // Pass width and height as arguments, assuming 10x10 characters
-
   // Randomly initialize text style
-  font = getRandomFont();
-  style = getRandomStyle();
-  textColor = getRandomColor();
-  size = getRandomSize();
+  fontName = getRandomFont();
+
+  snakeStyle = getRandomTextStyle();
+  snakeColor = getRandomColor();
+  snakeSizeVal = getRandomTextSize();
 
   start_X = random(width - 1);
   start_Y = random(height - 1);
   currentCharacter = getRandomCharacter(); // Initialize with a random character
+  head = new Snake(start_X, start_Y, currentCharacter);
 
-  head = new Snake(start_X, start_Y);
+  // Add head as the first segment of the snake
+  snakeSegments.push(head);
 
-  snake = [width * height];
-}
+  updateInterval = setInterval(addSegment, 1500); // Add a segment every 3 seconds
 
-function leaveTrail() {
-  // Set character on the grid at walker's current position
-  let gridX = floor(head.x / characterGrid.textSize);
-  let gridY = floor(head.y / characterGrid.textSize);
-  characterGrid.setCharacter(currentCharacter, gridX, gridY);
-
-  // Fade out characters on the grid over time
-  for (let y = 0; y < characterGrid.height; y++) {
-    for (let x = 0; x < characterGrid.width; x++) {
-      if (characterGrid.getCharacter(x, y) !== " ") {
-        let col = characterGrid.textColor;
-        let newAlpha = alpha(col) - 1; // Decrease alpha value
-        if (newAlpha < 0) newAlpha = 0; // Ensure alpha doesn't go below 0
-        let newColor = color(red(col), green(col), blue(col), newAlpha);
-        characterGrid.setTextColor(newColor);
-        characterGrid.setCharacter(" ", x, y); // Clear character
-      }
-    }
-  }
+  
 }
 
 // draw() function is called repeatedly, it's the main animation loop
 function draw() {
-  background(220);
+  background('orange');
   // call a method on the instance
   myInstance.myMethod();
 
-  // Put drawings here
-  var centerHorz = canvasContainer.width() / 2 - 125;
-  var centerVert = canvasContainer.height() / 2 - 125;
-
-  clear();
-  background("orange");
+  // Move and display snake
   head.step();
   head.display();
-  leaveTrail();
+
+  // Update snake segments positions
+  for (let i = 1; i < snakeSegments.length; i++) {
+    snakeSegments[i].step();
+    snakeSegments[i].display();
+  }
 }
 
-// mousePressed() function is called once after every time a mouse button is pressed
-function mousePressed() {
-  // code to run when mouse is pressed
+// Add a new segment to the snake
+function addSegment() {
+  let lastSegment = snakeSegments[snakeSegments.length - 1];
+  let newSegment = new Snake(
+    lastSegment.x - 1,
+    lastSegment.y - 1,
+    getRandomCharacter(),
+    fontName,
+    snakeStyle,
+    snakeColor,
+    random(20, 100)
+  );
+  snakeSegments.push(newSegment);
 }
 
 class Snake {
-  constructor(x, y) {
+  constructor(x, y, character, font, style, color, size) {
     this.x = x;
     this.y = y;
+    this.character = character;
+    this.font = font;
+    this.style = style;
+    this.color = color;
+    this.size = size;
     this.stepSize = 10;
     this.direction = floor(random(4)); // 0: up, 1: right, 2: down, 3: left
     this.changeDirectionTime = millis() + random(500, 2000); // Change direction after random time
@@ -145,8 +147,11 @@ class Snake {
   }
 
   display() {
-    fill(255);
-    //ellipse(this.x, this.y, 10, 10); // Draw a circle at current position
+    // textFont(this.font);
+    // textStyle(this.style);
+    textSize(this.size);
+    fill('black');
+    text(this.character, this.x, this.y);
   }
 }
 
@@ -163,97 +168,19 @@ function getRandomFont() {
   return random(fonts);
 }
 
-function getRandomStyle() {
+function getRandomTextStyle() {
   let styles = [NORMAL, ITALIC, BOLD];
   return random(styles);
 }
 
 function getRandomColor() {
-  return color(random(255), random(255), random(255));
+  return String( color(random(255), random(255), random(255)));
 }
 
-function getRandomSize() {
+function getRandomTextSize() {
   return floor(random(20, 100));
 }
 
 function getRandomCharacter() {
   return String.fromCharCode(floor(random(33, 126)));
-}
-
-class CharacterGrid {
-  constructor(width, height) {
-    this.width = width;
-    this.height = height;
-    this.grid = [];
-    this.textFont = "Arial";
-    this.textStyle = NORMAL;
-    this.textSize = 16;
-    this.textColor = "black";
-
-    // Initialize the grid with empty characters
-    for (let y = 0; y < this.height; y++) {
-      let row = [];
-      for (let x = 0; x < this.width; x++) {
-        row.push({
-          character: " ",
-          visited: false,
-        });
-      }
-      this.grid.push(row);
-    }
-  }
-
-  // Get the character at a specific position
-  getCharacter(x, y) {
-    return this.grid[y][x].character;
-  }
-
-  // Set the character at a specific position
-  setCharacter(character, x, y) {
-    if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-      this.grid[y][x].character = character;
-      if (character !== " ") {
-        // Only draw if character is not empty
-        textFont(this.textFont);
-        textStyle(this.textStyle);
-        textSize(this.textSize);
-        fill(this.textColor);
-        text(character, x * this.textSize, y * this.textSize);
-      }
-    }
-  }
-
-  // Clear the character at a specific position
-  clearCharacter(x, y) {
-    this.setCharacter(" ", x, y); // Set character to empty space to clear it
-  }
-
-  // Clear the entire grid
-  clearGrid() {
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        this.clearCharacter(x, y);
-      }
-    }
-  }
-
-  // Set text font
-  setTextFont(font) {
-    this.textFont = font;
-  }
-
-  // Set text style
-  setTextStyle(style) {
-    this.textStyle = style;
-  }
-
-  // Set text size
-  setTextSize(size) {
-    this.textSize = size;
-  }
-
-  // Set text color
-  setTextColor(color) {
-    this.textColor = color;
-  }
 }
