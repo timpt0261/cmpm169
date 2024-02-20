@@ -22,6 +22,9 @@ class MyProjectClass {
   }
 }
 
+
+
+
 function main() {
   // create an instance of the class
   let myInstance = new MyProjectClass(value1, value2);
